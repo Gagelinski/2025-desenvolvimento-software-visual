@@ -4,13 +4,29 @@ GET http://localhost:5166
 ### Listar os produtos
 GET http://localhost:5166/api/produto/listar
 
-###
+### Cadastrar Produto
 POST http://localhost:5166/api/produto/cadastrar
 Content-Type: application/json
 
 {
-    "nome" : "Mouse denovo kk",
+    "nome" : "Teclado",
     "quantidade" : 17,
     "preco" : 75.58
 }
 
+### Buscar produto por nome
+GET http://localhost:5166/api/produto/buscar/TecladoColorido
+
+
+### Deletar produto
+DELETE http://localhost:5166/api/produto/deletar/id
+
+### Atualizar produto
+PATCH http://localhost:5166/api/produto/atualizar/bd496866-4529-4577-983b-cb975bc2538e
+Content-Type: application/json
+
+{
+    "nome" : "TecladoColorido",
+    "quantidade" : 19,
+    "preco" : 85
+}

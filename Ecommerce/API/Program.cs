@@ -1,4 +1,6 @@
+using System.Security.Cryptography.Xml;
 using API.Models;
+using Microsoft.AspNetCore.Mvc;
 Console.Clear();
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -24,8 +26,8 @@ List<Produto> produtos = new List<Produto>
 // Métodos HTTP são formas de comunicação entre cliente e servidor.
 // Cada método define uma ação a ser realizada em um recurso:
 //
-// GET     -> Solicita dados de um recurso.
-// POST    -> Envia dados para criar um novo recurso.
+// GET     -> Recuperar/Enviar dados da sua API/aplicação.
+// POST    -> Enviar/Cadastar dados para criar um novo recurso.
 // PUT     -> Atualiza um recurso existente.
 // DELETE  -> Remove um recurso.
 // PATCH   -> Atualiza parcialmente um recurso existente.
@@ -33,15 +35,111 @@ List<Produto> produtos = new List<Produto>
 app.MapGet("/", () => "API de produtos");
 
 // GET: /api/produto/listar
+
+// Criar uma validaçao da lista de produtos par saber se existe algo dentro, 
+// se existir retorne a lista, se não retorne "NULO"
 app.MapGet("/api/produto/listar", () =>
 {
-    return produtos;
+    if (produtos.Any())
+    {
+        return Results.Ok (produtos);
+    }
+    return Results.NotFound ("Lista Vazia");
 });
 
-// POST: /api/produto/cadastrar
-app.MapPost("/api/produto/cadastrar", (Produto produto) =>
+// Tentei desse jeito, mas não funciona. Pq quando instanciei a lista ela ja deixou de ser nula
+// app.MapGet("/api/produto/listar", =>
+// {
+//     if (produtos != null)
+//     {
+//         return produtos;
+//     }
+//     else
+//     {
+//         return null;
+//     }
+// });
+
+//GET: /api/produto/buscar/nome_do_produto
+app.MapGet("/api/produto/buscar/{nome_do_produto}", ([FromRoute] string nome_do_produto) =>
 {
+    //Com a expressão lambda
+    Produto? resultado = produtos.FirstOrDefault(x => x.Nome == nome_do_produto); //o x representa o objeto que está sendo pesquisado
+    if (resultado is null)
+    {
+        return Results.NotFound("Produto não encontrado");
+    }
+    return Results.Ok(resultado);
+
+});
+ //Se feito sem a expressão lambda, fica assim:
+    // foreach (Produto produtoPesquisado in produtos)
+    // {
+    //     if (produtoPesquisado.Nome == nome_do_produto)
+    //     {
+    //         return Results.Ok(produtoPesquisado);
+    //     }
+    // }
+
+// POST: /api/produto/cadastrar
+//Não permitir o cadastro de um produto com o mesmo nome
+app.MapPost("/api/produto/cadastrar", ([FromBody] Produto produto) =>
+{
+    foreach (Produto produtoCadastrado in produtos)
+    {
+        if (produtoCadastrado.Nome == produto.Nome)
+        {
+            return Results.Conflict("Produto já cadastrado");
+        }
+    }
     produtos.Add(produto);
+    return Results.Created("", produto);
+});
+
+//como o Chat fez:
+// app.MapPost("/api/produto/cadastrar", (Produto produto) =>
+// {
+//     var existe = produtos.Any(p => p.Nome.Equals(produto.Nome, StringComparison.OrdinalIgnoreCase));
+//     if (existe)
+//     {
+//         return Results.BadRequest($"O produto '{produto.Nome}' já está cadastrado.");
+//     }
+
+//     produtos.Add(produto);
+
+//     return Results.Created($"/api/produto/{produto.Id}", produto);
+// });
+
+//DELET: /api/produto/deletar/id
+//Eu tinha feito pro nome mas substitui pra ID pra ter exemplos "diferentes"
+
+app.MapDelete("/api/produto/deletar/{id}", ([FromRoute] string id) =>
+{
+    //Com a expressão lambda
+    Produto? resultado = produtos.FirstOrDefault(x => x.Id == id); //o x representa o objeto que está sendo pesquisado
+    if (resultado is null)
+    {
+        return Results.NotFound("Produto não encontrado");
+    }
+    produtos.Remove(resultado);
+    return Results.Ok("Deletado");
+
+});
+
+//PUT: /api/produto/atualizar/id
+app.MapPatch("/api/produto/atualizar/{id}", ([FromRoute] string id,[FromBody] Produto produtoAtualizado) =>
+{
+    //Com a expressão lambda
+    Produto? resultado = produtos.FirstOrDefault(x => x.Id == id); //o x representa o objeto que está sendo pesquisado
+    if (resultado is null)
+    {
+        return Results.NotFound("Produto não encontrado");
+    }
+    resultado.Nome = produtoAtualizado.Nome;
+    resultado.Quantidade = produtoAtualizado.Quantidade;
+    resultado.Preco = produtoAtualizado.Preco;
+
+    return Results.Ok("Atualizado");
 
 });
 
