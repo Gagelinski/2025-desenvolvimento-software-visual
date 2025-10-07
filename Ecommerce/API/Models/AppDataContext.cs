@@ -1,5 +1,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace API.Models;
 
@@ -9,8 +10,10 @@ namespace API.Models;
 //3- Configurar string de conexão para SQLite
 public class AppDataContext : DbContext
 {
-    //Classe representa o banco, atributos representam as tabelas
+    //Classes representam as tabelas
     public DbSet<Produto> Produtos { get; set; }
+
+    public DbSet<Categoria> Categorias { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -1,8 +1,9 @@
 using System.Security.Cryptography.Xml;
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
-Console.Clear();
+// Console.Clear();
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<AppDataContext>();
 var app = builder.Build();
 
 //Lista de produtos
@@ -38,13 +39,13 @@ app.MapGet("/", () => "API de produtos");
 
 // Criar uma validaçao da lista de produtos par saber se existe algo dentro, 
 // se existir retorne a lista, se não retorne "NULO"
-app.MapGet("/api/produto/listar", () =>
+app.MapGet("/api/produto/listar", ([FromServices] AppDataContext ctx) =>
 {
-    if (produtos.Any())
+    if (ctx.Produtos.Any())
     {
-        return Results.Ok (produtos);
+        return Results.Ok(ctx.Produtos.ToList());
     }
-    return Results.NotFound ("Lista Vazia");
+    return Results.NotFound("Lista Vazia");
 });
 
 // Tentei desse jeito, mas não funciona. Pq quando instanciei a lista ela ja deixou de ser nula
@@ -61,10 +62,10 @@ app.MapGet("/api/produto/listar", () =>
 // });
 
 //GET: /api/produto/buscar/nome_do_produto
-app.MapGet("/api/produto/buscar/{nome_do_produto}", ([FromRoute] string nome_do_produto) =>
+app.MapGet("/api/produto/buscar/{nome_do_produto}", ([FromRoute] string nome_do_produto, [FromServices] AppDataContext ctx) =>
 {
     //Com a expressão lambda
-    Produto? resultado = produtos.FirstOrDefault(x => x.Nome == nome_do_produto); //o x representa o objeto que está sendo pesquisado
+    Produto? resultado = ctx.Produtos.FirstOrDefault(x => x.Nome == nome_do_produto); //o x representa o objeto que está sendo pesquisado
     if (resultado is null)
     {
         return Results.NotFound("Produto não encontrado");
@@ -83,16 +84,15 @@ app.MapGet("/api/produto/buscar/{nome_do_produto}", ([FromRoute] string nome_do_
 
 // POST: /api/produto/cadastrar
 //Não permitir o cadastro de um produto com o mesmo nome
-app.MapPost("/api/produto/cadastrar", ([FromBody] Produto produto) =>
+app.MapPost("/api/produto/cadastrar", ([FromBody] Produto produto, [FromServices] AppDataContext ctx) =>
 {
-    foreach (Produto produtoCadastrado in produtos)
+    Produto? resultado = ctx.Produtos.FirstOrDefault(x => x.Nome == produto.Nome); //o x representa o objeto que está sendo pesquisado
+    if (resultado is not null)
     {
-        if (produtoCadastrado.Nome == produto.Nome)
-        {
-            return Results.Conflict("Produto já cadastrado");
-        }
+        return Results.Conflict("Produto já cadastrado");
     }
-    produtos.Add(produto);
+    ctx.Produtos.Add(produto);
+    ctx.SaveChanges();
     return Results.Created("", produto);
 });
 
@@ -113,24 +113,25 @@ app.MapPost("/api/produto/cadastrar", ([FromBody] Produto produto) =>
 //DELET: /api/produto/deletar/id
 //Eu tinha feito pro nome mas substitui pra ID pra ter exemplos "diferentes"
 
-app.MapDelete("/api/produto/deletar/{id}", ([FromRoute] string id) =>
+app.MapDelete("/api/produto/deletar/{id}", ([FromRoute] string id, [FromServices] AppDataContext ctx) =>
 {
     //Com a expressão lambda
-    Produto? resultado = produtos.FirstOrDefault(x => x.Id == id); //o x representa o objeto que está sendo pesquisado
+    Produto? resultado = ctx.Produtos.Find(id);
     if (resultado is null)
     {
         return Results.NotFound("Produto não encontrado");
     }
-    produtos.Remove(resultado);
+    ctx.Produtos.Remove(resultado);
+    ctx.SaveChanges();
     return Results.Ok("Deletado");
 
 });
 
 //PUT: /api/produto/atualizar/id
-app.MapPatch("/api/produto/atualizar/{id}", ([FromRoute] string id,[FromBody] Produto produtoAtualizado) =>
+app.MapPatch("/api/produto/atualizar/{id}", ([FromRoute] string id,[FromBody] Produto produtoAtualizado, [FromServices] AppDataContext ctx) =>
 {
     //Com a expressão lambda
-    Produto? resultado = produtos.FirstOrDefault(x => x.Id == id); //o x representa o objeto que está sendo pesquisado
+    Produto? resultado = ctx.Produtos.Find(id);
     if (resultado is null)
     {
         return Results.NotFound("Produto não encontrado");
@@ -138,7 +139,8 @@ app.MapPatch("/api/produto/atualizar/{id}", ([FromRoute] string id,[FromBody] Pr
     resultado.Nome = produtoAtualizado.Nome;
     resultado.Quantidade = produtoAtualizado.Quantidade;
     resultado.Preco = produtoAtualizado.Preco;
-
+    ctx.Produtos.Update(resultado);
+    ctx.SaveChanges();
     return Results.Ok("Atualizado");
 
 });
