@@ -1,9 +1,18 @@
 using System.Security.Cryptography.Xml;
 using API.Models;
+using Microsoft.AspNetCore.Components.RenderTree;
 using Microsoft.AspNetCore.Mvc;
 // Console.Clear();
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDataContext>();
+builder.Services.AddCors(
+    options => options.AddPolicy("Acesso Total",
+    configs => configs
+        .AllowAnyOrigin()
+        .AllowAnyHeader()
+        .AllowAnyMethod())
+);
+
 var app = builder.Build();
 
 //Lista de produtos
@@ -147,5 +156,5 @@ app.MapPatch("/api/produto/atualizar/{id}", ([FromRoute] string id,[FromBody] Pr
 
 
 
-
+app.UseCors("Acesso Total");
 app.Run();
