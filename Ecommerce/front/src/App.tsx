@@ -2,6 +2,7 @@ import React from 'react';
 import ListarProdutos from './ListarProdutos';
 import CadastrarProduto from './CadastrarProduto';
 import {BrowserRouter, Route, Routes, Link} from "react-router-dom";
+import AlterarProduto from './AlterarProduto';
 
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
          <Routes>
             <Route path="/" element={< ListarProdutos/>} />
             <Route path="produto/cadastrar" element={<CadastrarProduto/>} />
+            <Route path="produto/alterar/:id" element={<AlterarProduto/>} />
           </Routes>
       </BrowserRouter>
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Produto from "./Produto";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 //Regras para criação de um componente
 //1 - Componente deve ser uma função
@@ -28,6 +29,22 @@ function ListarProdutos() {
       const dados = resposta.data;
       setProdutos(dados);
     } catch (error) {
+      console.log("Erro na requisição" + error);
+    }
+  }
+
+  function deletarProduto(id : string) {
+    alert(id)
+  }
+
+  async function deletarProdutoAPI(id : string){
+    try {
+      const resposta = await axios.delete(
+        `http://localhost:5166/api/produto/deletar/${id}`
+      );
+      listarProdutosAPI();
+      console.log(resposta.data);
+    } catch (error) {
       console.log(error);
     }
   }
@@ -43,6 +60,8 @@ function ListarProdutos() {
             <th>Preço</th>
             <th>Quantidade</th>
             <th>Criado em</th>
+            <th>Deletar</th>
+            <th>Alterar</th>
           </tr>
         </thead>
         <tbody>
@@ -53,6 +72,12 @@ function ListarProdutos() {
               <td>{produto.preco}</td>
               <td>{produto.quantidade}</td>
               <td>{produto.criadoEm}</td>
+              <td>
+                <button onClick={() => deletarProdutoAPI(produto.id!)}>Deletar</button>
+              </td>
+              <td>
+                <Link to={`/produto/alterar/${produto.id}`}>Alterar</Link>
+              </td>
             </tr>
           ))}
         </tbody>
